@@ -1,0 +1,39 @@
+version: "3"
+services:
+  meetup-service:
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/meetup-service
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    image: meetup-service:0.1.0-SNAPSHOT
+    ports:
+      - "8080:8080"
+    depends_on:
+      - migrations
+  postgres:
+    image: postgres:alpine
+#    environment:
+#      POSTGRES_PASSWORD: ${DB_PASSWORD}
+#      POSTGRES_USER: ${DB_USERNAME}
+#      POSTGRES_DB: meetup-service
+    ports:
+      - "5432:5432"
+  migrations:
+    restart: on-failure:5
+    image: liquibase/liquibase
+    environment:
+      liquibaseMode: local-test
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./src/main/resources:/liquibase/changelog
+    command:
+      - '--url=jdbc:postgresql://postgres:5432/meetup-service'
+      - '--changeLogFile=/changelog/migration.sql'
+      - '--username=${DB_USERNAME}'
+      - '--password=${DB_PASSWORD}'
+      - '--logLevel'
+      - 'info'
+      - 'update'
+    depends_on:
+      - postgres
